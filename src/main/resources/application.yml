@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: billing-portal
+
+  # Primary DataSource — openclinic_dbo (JPA entities live here too)
+  datasource:
+    url: jdbc:mysql://localhost:3306/openclinic_dbo?useSSL=false&serverTimezone=Africa/Kigali&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: openclinic-pool
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # creates OC_PORTAL_* tables if absent; never touches existing tables
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  # H2 console disabled — we use MySQL
+  h2:
+    console:
+      enabled: false
+
+# Secondary DataSource — ocadmin DB (patient demographics)
+app:
+  datasource:
+    ocadmin:
+      url: jdbc:mysql://localhost:3306/ocadmin_dbo?useSSL=false&serverTimezone=Africa/Kigali&allowPublicKeyRetrieval=true
+      username: root
+      password: root
+      driver-class-name: com.mysql.cj.jdbc.Driver
+  # OpenClinic server ID — used to build composite patient UIDs (format: {serverId}.{objectId})
+  openclinic:
+    server-id: 1
+
+  # PawaPay API — https://docs.pawapay.io/
+  pawapay:
+    api-token: ${PAWAPAY_API_TOKEN:}
+    base-url: ${PAWAPAY_BASE_URL:https://api.sandbox.pawapay.io}
+    callback-url: ${PAWAPAY_CALLBACK_URL:https://0bc5-2c0f-eb68-63f-9100-e99e-fe87-263e-8ea6.ngrok-free.app/api/payments/pawapay/callback}
+    correspondent: ${PAWAPAY_CORRESPONDENT:MTN_MOMO_RWA}
+    currency: ${PAWAPAY_CURRENCY:RWF}
+    country: ${PAWAPAY_COUNTRY:RWA}
+
+  # JWT
+  jwt:
+    secret: "your-very-long-secret-key-for-billing-portal-jwt-must-be-at-least-256-bits"
+    expiration-ms: 86400000   # 24 hours
+
+  # OTP
+  otp:
+    expiry-minutes: 5
+    expose-in-response: true   # set false in production; use SMS gateway instead
+
+  # HMS sync retry — backstop only; webhook is the primary path
+  sync:
+    retry-interval-ms: 15000   # 15 seconds
+    max-retries: 5
+
+server:
+  port: 8083
+
+logging:
+  level:
+    com.hospital.portal: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
