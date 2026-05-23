@@ -29,6 +29,7 @@ public class AuthService {
     private final PortalUserRepository portalUserRepo;
     private final OtpTokenRepository otpRepo;
     private final JwtUtil jwtUtil;
+    private final SmsService smsService;
 
     @Value("${app.otp.expiry-minutes:5}")
     private int otpExpiryMinutes;
@@ -39,11 +40,13 @@ public class AuthService {
     public AuthService(PatientJdbcRepository patientRepo,
                        PortalUserRepository portalUserRepo,
                        OtpTokenRepository otpRepo,
-                       JwtUtil jwtUtil) {
+                       JwtUtil jwtUtil,
+                       SmsService smsService) {
         this.patientRepo    = patientRepo;
         this.portalUserRepo = portalUserRepo;
         this.otpRepo        = otpRepo;
         this.jwtUtil        = jwtUtil;
+        this.smsService     = smsService;
     }
 
     /**
@@ -80,13 +83,12 @@ public class AuthService {
 
         log.info("OTP issued for phone={} personId={}", normalised, profile.getPersonId());
 
-        // In production: call SMS gateway here (Twilio, Africa's Talking, etc.)
-        // sendSms(normalised, "Your hospital portal OTP is: " + code);
+        smsService.sendOtp(normalised, code, otpExpiryMinutes);
 
         AuthResponseDTO response = new AuthResponseDTO();
         response.setMessage("OTP sent to " + mask(normalised) + ". Valid for " + otpExpiryMinutes + " minutes.");
-        if (exposeOtpInResponse) {
-            response.setDevOtp(code);  // dev mode only — never expose in production
+        if (exposeOtpInResponse && !smsService.isConfigured()) {
+            response.setDevOtp(code);  // dev mode only — suppressed when Twilio is active
         }
         return response;
     }

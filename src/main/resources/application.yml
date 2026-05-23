@@ -53,10 +53,18 @@ app:
     secret: "your-very-long-secret-key-for-billing-portal-jwt-must-be-at-least-256-bits"
     expiration-ms: 86400000   # 24 hours
 
+  # Africa's Talking — https://africastalking.com
+  # Sandbox: username=sandbox, any api-key from dashboard, register test numbers in simulator
+  africastalking:
+    username: ${AT_USERNAME:sandbox}
+    api-key: ${AT_API_KEY:atsk_c248bccb0663862026399409778ccf2952a90f6e36b76f7cc079487ab20a80007ab024e7}
+    sandbox: ${AT_SANDBOX:true}
+    sender-id: ${AT_SENDER_ID:}   # optional alphanumeric/shortcode; leave blank for default
+
   # OTP
   otp:
     expiry-minutes: 5
-    expose-in-response: true   # set false in production; use SMS gateway instead
+    expose-in-response: true   # set false in production once Twilio env vars are configured
 
   # HMS sync retry — backstop only; webhook is the primary path
   sync:
